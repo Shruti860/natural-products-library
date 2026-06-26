@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Natural Products Library</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+      background: #f0f0f0;
+    }
+
+    h1 {
+      text-align: center;
+      color: #333;
+    }
+
+    p.subtitle {
+      text-align: center;
+      color: #666;
+      margin-top: -10px;
+    }
+
+    .search-area {
+      text-align: center;
+      margin: 20px 0;
+    }
+
+    .search-area input {
+      padding: 8px;
+      width: 300px;
+      font-size: 14px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+
+    .sort-area {
+      text-align: center;
+      margin-bottom: 15px;
+    }
+
+    .sort-area label {
+      font-size: 14px;
+      margin-right: 5px;
+    }
+
+    .sort-area select {
+      padding: 6px;
+      font-size: 14px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: white;
+    }
+
+    th {
+      background-color: #4CAF50;
+      color: white;
+      padding: 10px;
+      text-align: left;
+      font-size: 14px;
+    }
+
+    td {
+      padding: 8px 10px;
+      border-bottom: 1px solid #ddd;
+      font-size: 13px;
+    }
+
+    tr:hover {
+      background-color: #f9f9f9;
+      cursor: pointer;
+    }
+
+    .count {
+      text-align: center;
+      margin-bottom: 8px;
+      font-size: 13px;
+      color: #555;
+    }
+
+    /* Modal */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: rgba(0,0,0,0.5);
+      z-index: 999;
+    }
+
+    .modal {
+      background: white;
+      width: 600px;
+      margin: 60px auto;
+      border-radius: 6px;
+      padding: 25px;
+      position: relative;
+    }
+
+    .modal h2 {
+      margin-top: 0;
+      color: #333;
+      font-size: 20px;
+    }
+
+    .modal table {
+      width: 100%;
+      margin-top: 10px;
+    }
+
+    .modal td {
+      padding: 7px 10px;
+      font-size: 13px;
+      border-bottom: 1px solid #eee;
+      vertical-align: top;
+    }
+
+    .modal td:first-child {
+      font-weight: bold;
+      color: #555;
+      width: 40%;
+    }
+
+    .close-btn {
+      position: absolute;
+      top: 12px; right: 16px;
+      font-size: 22px;
+      cursor: pointer;
+      color: #888;
+    }
+
+    .close-btn:hover {
+      color: #333;
+    }
+
+    .na {
+      color: #aaa;
+    }
+
+    .smiles-val {
+      font-family: monospace;
+      font-size: 11px;
+      word-break: break-all;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Natural Products Library</h1>
+  <p class="subtitle">SKJ Lab — 313 compounds | Click any row to see full details</p>
+
+  <div class="search-area">
+    <input type="text" id="searchBox" placeholder="Search compound name..." oninput="filterTable()">
+  </div>
+
+  <div class="sort-area">
+    <label>Sort by:</label>
+    <select onchange="sortTable(this.value)">
+      <option value="name">Name (A-Z)</option>
+      <option value="mw">Molecular Weight</option>
+      <option value="logp">cLogP</option>
+      <option value="dl">Druglikeness</option>
+    </select>
+  </div>
+
+  <div class="count" id="count"></div>
+
+  <table id="mainTable">
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>Compound Name</th>
+        <th>Mol. Weight (g/mol)</th>
+        <th>cLogP</th>
+        <th>cLogS</th>
+        <th>H-Acceptors</th>
+        <th>H-Donors</th>
+        <th>Druglikeness</th>
+      </tr>
+    </thead>
+    <tbody id="tableBody"></tbody>
+  </table>
+
+  <!-- Modal -->
+  <div class="modal-overlay" id="modalOverlay" onclick="closeModal(event)">
+    <div class="modal" id="modal">
+      <span class="close-btn" onclick="closeModalDirect()">&#10005;</span>
+      <h2 id="modal-name"></h2>
+      <table id="modal-table"></table>
+    </div>
+  </div>
+
+<script>
+const DATA = [{"Names":"Delalutin","Smiles":"CCCCCC(=O)O[C@@]1(CC[C@@H]2[C@@]1(CC[C@H]3[C@H]2CCC4=CC(=O)CC[C@]34C)C)C(=O)C","InChI-Key":"DOMWKUIIPQCAJU-BWLCZPDMSA-N","pka":null,"Total Molweight":428.611,"cLogP":5.4978,"cLogS":-5.582,"H-Acceptors":4.0,"H-Donors":0.0,"Total Surface Area":330.35,"Druglikeness":-13.122},{"Names":"16-Dehydropregnenolone","Smiles":"CC(=O)C1=CC[C@@H]2[C@@]1(CC[C@H]3[C@H]2CC=C4[C@@]3(CC[C@@H](C4)O)C)C","InChI-Key":"YLFRRPUBVUAHSR-UYPUKZBLSA-N","pka":14.603,"Total Molweight":314.467,"cLogP":3.7708,"cLogS":-4.227,"H-Acceptors":2.0,"H-Donors":1.0,"Total Surface Area":236.94,"Druglikeness":0.7287},{"Names":"diosgenin","Smiles":"C[C@@H]1CC[C@@]2([C@H]([C@H]3[C@@H](O2)C[C@@H]4[C@@]3(CC[C@H]5[C@H]4CC=C6[C@@]5(CC[C@@H](C6)O)C)C)C)OC1","InChI-Key":"WQLVFSAGQJTQCK-MWQHSTEXSA-N","pka":14.605,"Total Molweight":414.627,"cLogP":4.8814,"cLogS":-5.579,"H-Acceptors":3.0,"H-Donors":1.0,"Total Surface Area":301.43,"Druglikeness":0.844},{"Names":"rutin","Smiles":"C[C@H]1[C@@H]([C@H]([C@H]([C@@H](O1)OC...)O","InChI-Key":"IKGXIBQEEMLURG-RZIXAHTPSA-N","pka":"6.633, 16.858, 11.864, 12.886, 7.594","Total Molweight":610.519,"cLogP":-1.2573,"cLogS":-2.398,"H-Acceptors":16.0,"H-Donors":10.0,"Total Surface Area":397.71,"Druglikeness":1.9337},{"Names":"piperine","Smiles":"C1CCN(CC1)C(=O)/C=C/C=C/C2=CC3=C(C=C2)OCO3","InChI-Key":"MXXWOMGUGJBKIW-UHFFFAOYSA-N","pka":null,"Total Molweight":285.342,"cLogP":3.5951,"cLogS":-3.608,"H-Acceptors":4.0,"H-Donors":0.0,"Total Surface Area":229.87,"Druglikeness":0.4329},{"Names":"rottlerin","Smiles":"CC1=C(C(=C(C(=C1O)C(=O)C)O)CC2=...)O","InChI-Key":"DEZFNHCVIZBHBI-UHFFFAOYSA-N","pka":"6.257, 11.524, 8.122, 15.009, 12.008","Total Molweight":516.544,"cLogP":4.633,"cLogS":-6.358,"H-Acceptors":8.0,"H-Donors":5.0,"Total Surface Area":382.74,"Druglikeness":-1.3931},{"Names":"xanthotoxin","Smiles":"COC1=C2C(=CC3=C1OC=C3)C=CC(=O)O2","InChI-Key":"QXKHYNVANLEOEG-UHFFFAOYSA-N","pka":null,"Total Molweight":216.192,"cLogP":1.879,"cLogS":-3.547,"H-Acceptors":4.0,"H-Donors":0.0,"Total Surface Area":160.56,"Druglikeness":-3.3751},{"Names":"withaferin A","Smiles":"CC1=C(C(=O)O[C@H](C1)...)CO","InChI-Key":"DBRXOUCRJQVYJQ-JUSRXIRJSA-N","pka":"13.529, 12.778","Total Molweight":470.604,"cLogP":2.4938,"cLogS":-4.469,"H-Acceptors":6.0,"H-Donors":2.0,"Total Surface Area":334.36,"Druglikeness":1.6889},{"Names":"rohitukin","Smiles":"CC(C)CC(=O)OC1C(...)OC=O","InChI-Key":"BGIQNWKPRGQOMD-UHFFFAOYSA-N","pka":11.33,"Total Molweight":658.694,"cLogP":2.3244,"cLogS":-5.453,"H-Acceptors":13.0,"H-Donors":1.0,"Total Surface Area":467.84,"Druglikeness":-2.8059},{"Names":"Colchicine","Smiles":"CC(=O)N[C@H]1CCC2=CC(=C(C(=C2C3=CC=C(C(=O)C=C13)OC)OC)OC)OC","InChI-Key":"IAKHMKGGTNLKSZ-INIZCTEOSA-N","pka":null,"Total Molweight":399.442,"cLogP":1.863,"cLogS":-3.046,"H-Acceptors":7.0,"H-Donors":1.0,"Total Surface Area":308.67,"Druglikeness":1.024},{"Names":"vasicine","Smiles":"C1CN2CC3=CC=CC=C3N=C2C1O","InChI-Key":"Unknown","pka":12.986,"Total Molweight":187.221,"cLogP":0.2993,"cLogS":-1.637,"H-Acceptors":3.0,"H-Donors":0.0,"Total Surface Area":136.56,"Druglikeness":2.9868},{"Names":"brucine sulphate","Smiles":"COC1=C(C=C2...)OC.OS(=O)(=O)O","InChI-Key":"HCMSIGALSOEZRW-ZJOONDLNSA-N","pka":"7.701, 7.701","Total Molweight":887.017,"cLogP":1.4535,"cLogS":-3.59,"H-Acceptors":6.0,"H-Donors":0.0,"Total Surface Area":265.31,"Druglikeness":5.8636},{"Names":"reserpine","Smiles":"CO[C@H]1[C@@H](C[C@@H]2CN3CCC4=C(...)OC)OC","InChI-Key":"QEVHRUUCFGRFIF-DZNGDJRBSA-N","pka":7.548,"Total Molweight":608.686,"cLogP":3.5754,"cLogS":-4.446,"H-Acceptors":11.0,"H-Donors":1.0,"Total Surface Area":449.85,"Druglikeness":2.322},{"Names":"ajmalicine","Smiles":"C[C@H]1[C@H]2CN3CCC4=C([C@@H]3C[C@@H]2C(=CO1)C(=O)OC)NC5=CC=CC=C45","InChI-Key":"GRTOGORTSDXSFK-XXHPDZBISA-N","pka":7.406,"Total Molweight":352.433,"cLogP":2.2674,"cLogS":-3.141,"H-Acceptors":5.0,"H-Donors":1.0,"Total Surface Area":259.25,"Druglikeness":2.6043},{"Names":"bicuculine","Smiles":"C[N+]1(CCC2=CC3=C(...).[Br-]","InChI-Key":"BWXCECYGGMGBHD-HLRBRJAUSA-M","pka":null,"Total Molweight":462.295,"cLogP":-0.0944,"cLogS":-3.788,"H-Acceptors":7.0,"H-Donors":0.0,"Total Surface Area":257.21,"Druglikeness":-0.5775},{"Names":"vindolin","Smiles":"CC[C@@]12C=CCN3[C@@H]1[C@]4(CC3)...OC)C","InChI-Key":"CXBGOBGJHGGWIE-YHGKRWFNSA-N","pka":"10.820, 7.162","Total Molweight":456.537,"cLogP":1.3236,"cLogS":-3.116,"H-Acceptors":8.0,"H-Donors":1.0,"Total Surface Area":323.28,"Druglikeness":3.2845},{"Names":"aconitine","Smiles":"CCN1C[C@@]2([C@@H](...)COC","InChI-Key":"XFSBVAOIAHNAPC-KPWKELPBSA-N","pka":"12.725, 14.669, 7.387, 14.203","Total Molweight":645.743,"cLogP":0.5443,"cLogS":-3.016,"H-Acceptors":12.0,"H-Donors":3.0,"Total Surface Area":438.61,"Druglikeness":4.9261},{"Names":"camptothecin","Smiles":"CC[C@@]1(C2=C(COC1=O)C(=O)N3CC4=CC5=CC=CC=C5N=C4C3=C2)O","InChI-Key":"VSJKWCGYPAHWDS-FQEVSTJZSA-N","pka":10.945,"Total Molweight":348.357,"cLogP":1.1838,"cLogS":-2.741,"H-Acceptors":6.0,"H-Donors":1.0,"Total Surface Area":239.85,"Druglikeness":5.3292},{"Names":"brucin","Smiles":"COC1=C(C=C2C(=C1)[C@]34CCN5...)OC","InChI-Key":"RRKTZKIUPZVBMF-XWHPTBRCSA-N","pka":7.701,"Total Molweight":394.469,"cLogP":1.4535,"cLogS":-3.59,"H-Acceptors":6.0,"H-Donors":0.0,"Total Surface Area":265.31,"Druglikeness":4.6438},{"Names":"tannic acid","Smiles":"C1=C(C=C(C(=C1O)O)O)C(=O)OC2=CC(...)O","InChI-Key":"LRBQNJMCXXYXIU-WKMQCYIUSA-N","pka":"6.104, 7.517, 12.769, 16.929","Total Molweight":1701.2,"cLogP":5.5312,"cLogS":-7.599,"H-Acceptors":46.0,"H-Donors":25.0,"Total Surface Area":1120.1,"Druglikeness":-0.2553},{"Names":"bergenin","Smiles":"COC1=C(C=C2C(=C1O)[C@H]3[C@@H]([C@H]([C@@H]([C@H](O3)CO)O)O)OC2=O)O","InChI-Key":"YWJXCIXBAKGUKZ-FQVYEVNKSA-N","pka":"13.152, 7.097, 12.165, 18.990, 15.133","Total Molweight":328.272,"cLogP":-1.626,"cLogS":-0.949,"H-Acceptors":9.0,"H-Donors":5.0,"Total Surface Area":214.28,"Druglikeness":-1.6415},{"Names":"fisetin","Smiles":"C1=CC(=C(C=C1C2=C(C(=O)C3=C(O2)C=C(C=C3)O)O)O)O","InChI-Key":"XHEFDIBZLJXQHF-UHFFFAOYSA-N","pka":"10.719, 8.068, 7.600, 16.673","Total Molweight":286.238,"cLogP":1.8359,"cLogS":-2.787,"H-Acceptors":6.0,"H-Donors":4.0,"Total Surface Area":195.59,"Druglikeness":-0.0828},{"Names":"emetine","Smiles":"CC[C@H]1CN2CCC3=CC(=C(C=C3...)OC)OC","InChI-Key":"AUVVAXYIELKVAI-HAFLYIAKSA-N","pka":"8.958, 8.581","Total Molweight":480.647,"cLogP":4.9095,"cLogS":-4.066,"H-Acceptors":6.0,"H-Donors":1.0,"Total Surface Area":375.66,"Druglikeness":3.8313},{"Names":"boeravinone B","Smiles":"CC1=C(C2=C(C=C1O)OC3=C(C2=O)C4=CC=CC=C4OC3O)O","InChI-Key":"YVVDYYFGAWQOGB-QGZVFWFLSA-N","pka":"6.874, 10.768, 12.480","Total Molweight":312.276,"cLogP":2.1362,"cLogS":-3.301,"H-Acceptors":6.0,"H-Donors":3.0,"Total Surface Area":210.5,"Druglikeness":0.3013},{"Names":"lupeol","Smiles":"CC(=C)[C@@H]1CC[C@]2(...)C","InChI-Key":"MQYXUWHLBZFQQO-DCTTWMPASA-N","pka":14.67,"Total Molweight":426.726,"cLogP":7.6469,"cLogS":-6.803,"H-Acceptors":1.0,"H-Donors":1.0,"Total Surface Area":325.57,"Druglikeness":-22.172},{"Names":"stevioside","Smiles":"C[C@@]12CCC[C@@]([C@H]1CC[C@]34...)...","InChI-Key":"UEDUENGHJMELGK-ISLJTODFSA-N","pka":"12.710, 21.122, 16.826","Total Molweight":804.876,"cLogP":-2.2172,"cLogS":-3.167,"H-Acceptors":18.0,"H-Donors":11.0,"Total Surface Area":533.13,"Druglikeness":-9.1928},{"Names":"vaginidin","Smiles":"CC(C)CC(=O)O[C@H]1[C@H](OC2=C1C3=C(C=C2)C=CC(=O)O3)C(C)(C)O","InChI-Key":"VKTNFVWVAQYYBV-QZTJIDSGSA-N","pka":13.312,"Total Molweight":346.378,"cLogP":2.7468,"cLogS":-3.657,"H-Acceptors":6.0,"H-Donors":1.0,"Total Surface Area":255.32,"Druglikeness":-3.7425},{"Names":"shikimic acid","Smiles":"C1[C@H]([C@@H]([C@@H](C=C1C(=O)O)O)O)O","InChI-Key":"JXOHGGNKMLTUBP-SRQIZXRXSA-N","pka":"4.176, 17.392, 19.633, 13.629","Total Molweight":174.151,"cLogP":-1.6158,"cLogS":-0.324,"H-Acceptors":5.0,"H-Donors":4.0,"Total Surface Area":119.12,"Druglikeness":0.2455},{"Names":"radicicol","Smiles":"C[C@@H]1C[C@@H]2[C@H](O2)/C=C\\C=C\\C(=O)CC3=C(...)C(=O)O1","InChI-Key":"WYZWZEOGROVVHK-DFKRKDTASA-N","pka":"6.693, 11.625","Total Molweight":364.78,"cLogP":2.7383,"cLogS":-3.667,"H-Acceptors":6.0,"H-Donors":2.0,"Total Surface Area":267.81,"Druglikeness":0.51},{"Names":"sphondin","Smiles":"COC1=C2C(=C3C(=C1)C=CC(=O)O3)C=CO2","InChI-Key":"DLCJNIBLOSKIQW-UHFFFAOYSA-N","pka":null,"Total Molweight":216.192,"cLogP":1.879,"cLogS":-3.547,"H-Acceptors":4.0,"H-Donors":0.0,"Total Surface Area":160.56,"Druglikeness":-3.3751},{"Names":"karanjin","Smiles":"COC1=C(OC2=C(C1=O)C=CC3=C2C=CO3)C4=CC=CC=C4","InChI-Key":"LKPQNZRGGNOPPU-UHFFFAOYSA-N","pka":null,"Total Molweight":292.289,"cLogP":3.7525,"cLogS":-4.962,"H-Acceptors":4.0,"H-Donors":0.0,"Total Surface Area":216.74,"Druglikeness":-0.3807},{"Names":"ellagic acid","Smiles":"C1=C2C3=C(C(=C1O)O)OC(=O)C4=CC(=C(C(=C43)OC2=O)O)O","InChI-Key":"AFSDNFLWKVMVRB-UHFFFAOYSA-N","pka":"5.127, 11.784, 11.784, 5.127","Total Molweight":302.194,"cLogP":1.2774,"cLogS":-3.286,"H-Acceptors":8.0,"H-Donors":4.0,"Total Surface Area":186.92,"Druglikeness":-1.5983},{"Names":"podophyllotoxin","Smiles":"COC1=CC(=CC(=C1OC)OC)[C@H]2[C@@H]3[C@H](COC3=O)[C@H](C4=CC5=C(C=C24)OCO5)O","InChI-Key":"YJGVMLPVUAXIQN-NWTFUFRBSA-N","pka":13.146,"Total Molweight":414.409,"cLogP":1.7928,"cLogS":-3.843,"H-Acceptors":8.0,"H-Donors":1.0,"Total Surface Area":290.92,"Druglikeness":0.1723},{"Names":"corlumine","Smiles":"CN1CCC2=CC(=C(C=C2C1C3C4=C(C5=C(C=C4)OCO5)C(=O)O3)OC)OC","InChI-Key":"SZDGAZFTAUFFQH-UHFFFAOYSA-N","pka":7.467,"Total Molweight":383.399,"cLogP":2.7549,"cLogS":-3.378,"H-Acceptors":7.0,"H-Donors":0.0,"Total Surface Area":273.63,"Druglikeness":4.3358},{"Names":"boswellic acid","Smiles":"C[C@@H]1CC[C@@]2(CC[C@@]3(...)C)C","InChI-Key":"HMMGKOVEOFBCAU-OQQDVLCCSA-N","pka":4.12,"Total Molweight":512.728,"cLogP":5.7783,"cLogS":-6.173,"H-Acceptors":5.0,"H-Donors":1.0,"Total Surface Area":375.52,"Druglikeness":-1.7193},{"Names":"ketoboswellic acid","Smiles":"C[C@@H]1CC[C@@]2(CC[C@@]3(...)C)C","InChI-Key":"HMMGKOVEOFBCAU-OQQDVLCCSA-N","pka":4.12,"Total Molweight":512.728,"cLogP":5.7783,"cLogS":-6.173,"H-Acceptors":5.0,"H-Donors":1.0,"Total Surface Area":375.52,"Druglikeness":-1.7193},{"Names":"Dehydroandrographolide","Smiles":"C[C@@]12CC[C@H]([C@@]([C@H]1CCC(=C)[C@@H]2C/C=C/3\\C=COC3=O)(C)CO)O","InChI-Key":"YIIRVUDGRKEWBV-VYMYIBDJSA-N","pka":"14.475, 16.410","Total Molweight":332.438,"cLogP":2.4676,"cLogS":-3.576,"H-Acceptors":4.0,"H-Donors":2.0,"Total Surface Area":252.81,"Druglikeness":-5.1251},{"Names":"chrysin","Smiles":"C1=CC=C(C=C1)C2=CC(=O)C3=C(C=C(C=C3O2)O)O","InChI-Key":"RTIXKCRFFJGDFG-UHFFFAOYSA-N","pka":"7.137, 11.872","Total Molweight":254.24,"cLogP":2.6814,"cLogS":-3.152,"H-Acceptors":4.0,"H-Donors":2.0,"Total Surface Area":184.68,"Druglikeness":0.2819},{"Names":"withanone","Smiles":"CC1=C(C(=O)O[C@H](C1)[C@@H](C)[C@]2(...)O)C","InChI-Key":"FAZIYUIDUNHZRG-RHWOUWLISA-N","pka":"13.979, 12.716","Total Molweight":470.604,"cLogP":2.5971,"cLogS":-4.526,"H-Acceptors":6.0,"H-Donors":2.0,"Total Surface Area":330.77,"Druglikeness":-0.6321},{"Names":"brefeldin","Smiles":"C[C@H]1CCC/C=C/[C@@H]2C[C@@H](C[C@H]2[C@@H](/C=C/C(=O)O1)O)O","InChI-Key":"KQNZDYYTLMIZCT-NJVJYBDUSA-N","pka":"13.505, 15.262","Total Molweight":280.363,"cLogP":2.4455,"cLogS":-2.933,"H-Acceptors":4.0,"H-Donors":2.0,"Total Surface Area":223.51,"Druglikeness":-9.2257},{"Names":"flavopiridol","Smiles":"CN1CC[C@@H]([C@@H](C1)O)C2=C(C=C(C3=C2OC(=CC3=O)C4=CC=CC=C4Cl)O)O","InChI-Key":"Unknown","pka":"8.933, 15.365, 6.524, 11.578","Total Molweight":400.837,"cLogP":3.6216,"cLogS":-4.833,"H-Acceptors":6.0,"H-Donors":2.0,"Total Surface Area":278.69,"Druglikeness":6.5998},{"Names":"mangiferin","Smiles":"C1=C2C(=CC(=C1O)O)OC3=C(C2=O)C(=C(C(=C3)O)...)O","InChI-Key":"AEDDIBAIWPIIBD-URBFBWIISA-N","pka":"6.196, 13.571, 12.197, 7.591","Total Molweight":422.341,"cLogP":-0.4299,"cLogS":-3.156,"H-Acceptors":11.0,"H-Donors":8.0,"Total Surface Area":270.83,"Druglikeness":-3.0467},{"Names":"andrographolide","Smiles":"C[C@@]12CC[C@H]([C@@]([C@H]1CCC(=C)[C@H]2C/C=C/3\\[C@@H](COC3=O)O)(C)CO)O","InChI-Key":"BOJKULTULYSRAS-ODQAOENWSA-N","pka":"12.582, 14.475, 16.410","Total Molweight":350.453,"cLogP":1.883,"cLogS":-2.953,"H-Acceptors":5.0,"H-Donors":3.0,"Total Surface Area":258.92,"Druglikeness":-4.5926},{"Names":"pregnanolone","Smiles":"CC(=O)[C@H]1CC[C@@H]2[C@@]1(CC[C@H]3[C@H]2CC[C@H]4[C@@]3(CC[C@H](C4)O)C)C","InChI-Key":"AURFZBICLPNKBZ-JTVSZNOMSA-N","pka":14.667,"Total Molweight":318.499,"cLogP":3.9798,"cLogS":-4.755,"H-Acceptors":2.0,"H-Donors":1.0,"Total Surface Area":240.04,"Druglikeness":0.1774},{"Names":"4-methylumbelliferone","Smiles":"CC1=CC(=O)OC2=C1C=CC(=C2)O","InChI-Key":"HSHNITRMYYLLCV-UHFFFAOYSA-N","pka":8.249,"Total Molweight":176.171,"cLogP":1.2299,"cLogS":-1.803,"H-Acceptors":3.0,"H-Donors":1.0,"Total Surface Area":130.83,"Druglikeness":-7.1335},{"Names":"HYDRASTINE","Smiles":"CN1CCC2=CC3=C(C=C2[C@@H]1[C@@H]4C5=C(C(=C(C=C5)OC)OC)C(=O)O4)OCO3","InChI-Key":"JZUTXVTYJDCMDU-RTBURBONSA-N","pka":7.417,"Total Molweight":383.399,"cLogP":2.7549,"cLogS":-3.378,"H-Acceptors":7.0,"H-Donors":0.0,"Total Surface Area":273.63,"Druglikeness":4.3358},{"Names":"solasodine","Smiles":"C[C@@H]1CC[C@@]2([C@H]([C@H]3[C@@H](O2)C[C@@H]4...]C)NC1","InChI-Key":"KWVISVAMQJWJSZ-IHQJDIQUSA-N","pka":"8.502, 14.604","Total Molweight":413.643,"cLogP":4.7379,"cLogS":-5.443,"H-Acceptors":3.0,"H-Donors":2.0,"Total Surface Area":302.89,"Druglikeness":2.6674},{"Names":"tetrahydropalmatin","Smiles":"COC1=C(C2=C(CC3C4=CC(=C(C=C4CCN3C2)OC)OC)C=C1)OC","InChI-Key":"AEQDJSLRWYMAQI-QGZVFWFLSA-N","pka":7.815,"Total Molweight":355.433,"cLogP":2.8605,"cLogS":-2.994,"H-Acceptors":5.0,"H-Donors":0.0,"Total Surface Area":272.9,"Druglikeness":2.9203},{"Names":"heraclenin","Smiles":"CC1([C@H](O1)COC2=C3C(=CC4=C2OC=C4)C=CC(=O)O3)C","InChI-Key":"CTJZWFCPUDPLME-LLVKDONJSA-N","pka":null,"Total Molweight":286.282,"cLogP":2.1175,"cLogS":-4.179,"H-Acceptors":5.0,"H-Donors":0.0,"Total Surface Area":213.64,"Druglikeness":-4.8483},{"Names":"khellin","Smiles":"CC1=CC(=O)C2=C(C3=C(C(=C2O1)OC)OC=C3)OC","InChI-Key":"HSMPDPBYAYSOBC-UHFFFAOYSA-N","pka":null,"Total Molweight":260.244,"cLogP":2.3898,"cLogS":-4.109,"H-Acceptors":5.0,"H-Donors":0.0,"Total Surface Area":193.29,"Druglikeness":-6.8422},{"Names":"beta-caryophyllene oxide","Smiles":"C[C@@]12CC[C@@H]3[C@H](CC3(C)C)C(=C)CC[C@H]1O2","InChI-Key":"NVEQFIOZRFFVFW-GUIRCDHDSA-N","pka":null,"Total Molweight":220.355,"cLogP":4.0553,"cLogS":-3.558,"H-Acceptors":1.0,"H-Donors":0.0,"Total Surface Area":177.3,"Druglikeness":-4.768},{"Names":"santonin","Smiles":"C[C@H]1[C@@H]2CC[C@]3(C=CC(=O)C(=C3[C@H]2OC1=O)C)C","InChI-Key":"XJHDMGJURBVLLE-OMCHNSJMSA-N","pka":null,"Total Molweight":246.305,"cLogP":1.8467,"cLogS":-2.704,"H-Acceptors":3.0,"H-Donors":0.0,"Total Surface Area":180.13,"Druglikeness":1.8123},{"Names":"caffeine","Smiles":"CN1C=NC2=C1C(=O)N(C(=O)N2C)C","InChI-Key":"RYYVLZVUVIJVGH-UHFFFAOYSA-N","pka":null,"Total Molweight":194.193,"cLogP":-0.1784,"cLogS":-1.144,"H-Acceptors":6.0,"H-Donors":0.0,"Total Surface Area":140.6,"Druglikeness":2.5858},{"Names":"TRILAURIN","Smiles":"CCCCCCCCCCCC(=O)OCC(COC(=O)CCCCCCCCCCC)OC(=O)CCCCCCCCCCC","InChI-Key":"VMPHSYLJUKZBJJ-UHFFFAOYSA-N","pka":null,"Total Molweight":639.011,"cLogP":13.642,"cLogS":-9.171,"H-Acceptors":6.0,"H-Donors":0.0,"Total Surface Area":586.35,"Druglikeness":-26.013},{"Names":"strychnine","Smiles":"C1CN2CC3=CCO[C@H]4CC(=O)N5[C@H]6[C@H]4[C@H]3C[C@H]2[C@@]61C7=CC=CC=C75","InChI-Key":"QMGVPVSNSZLJIA-QYFBZWOXSA-N","pka":7.701,"Total Molweight":334.418,"cLogP":1.5935,"cLogS":-3.554,"H-Acceptors":4.0,"H-Donors":0.0,"Total Surface Area":220.79,"Druglikeness":4.5843},{"Names":"paclitaxol","Smiles":"CC1CC(C2(C(C1(CO)OC(=O)C)...)C)O","InChI-Key":"XRRZWHGZGCBEMT-UHFFFAOYSA-N","pka":"13.648, 14.316, 12.632, 11.456","Total Molweight":869.958,"cLogP":3.6631,"cLogS":-6.367,"H-Acceptors":15.0,"H-Donors":5.0,"Total Surface Area":627.3,"Druglikeness":0.93},{"Names":"6 gingerol","Smiles":"CCCCC[C@@H](CC(=O)CCC1=CC(=C(C=C1)O)OC)O","InChI-Key":"NLDDIKRKFXEWBK-AWEZNQCLSA-N","pka":"14.052, 9.249","Total Molweight":294.389,"cLogP":3.5638,"cLogS":-3.254,"H-Acceptors":4.0,"H-Donors":2.0,"Total Surface Area":247.05,"Druglikeness":-9.062},{"Names":"Thevetiaflavone","Smiles":"COC1=CC(=CC2=C1C(=O)C=C(O2)C3=CC=C(C=C3)O)O","InChI-Key":"YQABHAHJGSNVQR-UHFFFAOYSA-N","pka":"7.819, 8.731","Total Molweight":284.266,"cLogP":2.6114,"cLogS":-3.17,"H-Acceptors":5.0,"H-Donors":2.0,"Total Surface Area":206.94,"Druglikeness":0.4033},{"Names":"apigenin","Smiles":"C1=CC(=CC=C1C2=CC(=O)C3=C(C=C(C=C3O2)O)O)O","InChI-Key":"KZNIFHPLKGYRTM-UHFFFAOYSA-N","pka":"7.178, 12.123, 8.725","Total Molweight":270.239,"cLogP":2.3357,"cLogS":-2.856,"H-Acceptors":5.0,"H-Donors":3.0,"Total Surface Area":191.03,"Druglikeness":0.2819},{"Names":"catechin","Smiles":"C1[C@@H]([C@H](OC2=CC(=CC(=C21)O)O)C3=CC(=C(C=C3)O)O)O","InChI-Key":"PFTAWBLQPZVEMU-UKRRQHHQSA-N","pka":"16.167, 13.877, 9.311, 8.744, 14.866","Total Molweight":290.27,"cLogP":1.5087,"cLogS":-1.764,"H-Acceptors":6.0,"H-Donors":5.0,"Total Surface Area":200.03,"Druglikeness":0.3152},{"Names":"piperic acid","Smiles":"C1OC2=C(O1)C=C(C=C2)/C=C/C=C/C(=O)O","InChI-Key":"RHBGITBPARBDPH-UHFFFAOYSA-N","pka":4.166,"Total Molweight":218.207,"cLogP":2.2419,"cLogS":-3.022,"H-Acceptors":4.0,"H-Donors":1.0,"Total Surface Area":170.62,"Druglikeness":0.4077},{"Names":"curcumin","Smiles":"COC1=C(C=CC(=C1)/C=C/C(=O)CC(=O)/C=C/C2=CC(=C(C=C2)O)OC)O","InChI-Key":"VFLDPWHFBUODDF-UHFFFAOYSA-N","pka":"8.863, 8.863","Total Molweight":368.384,"cLogP":2.949,"cLogS":-3.622,"H-Acceptors":6.0,"H-Donors":2.0,"Total Surface Area":292.5,"Druglikeness":-4.7745},{"Names":"chalcone","Smiles":"C1=CC=C(C=C1)/C=C/C(=O)C2=CC=CC=C2","InChI-Key":"DQFBYFPFKXHELB-UHFFFAOYSA-N","pka":null,"Total Molweight":208.259,"cLogP":3.3038,"cLogS":-3.84,"H-Acceptors":1.0,"H-Donors":0.0,"Total Surface Area":177.27,"Druglikeness":0.1125},{"Names":"berberine","Smiles":"COC1=C(C2=C[N+]3=C(C=C2C=C1)C4=CC5=C(C=C4CC3)OCO5)OC","InChI-Key":"YBHILYKTIRIUTE-UHFFFAOYSA-N","pka":null,"Total Molweight":336.366,"cLogP":0.5223,"cLogS":-4.669,"H-Acceptors":5.0,"H-Donors":0.0,"Total Surface Area":243.72,"Druglikeness":-2.2467},{"Names":"1-EICOSANOL","Smiles":"CCCCCCCCCCCCCCCCCCCCO","InChI-Key":"BTFJIXJJCSYFAL-UHFFFAOYSA-N","pka":14.832,"Total Molweight":298.552,"cLogP":8.2297,"cLogS":-5.337,"H-Acceptors":1.0,"H-Donors":1.0,"Total Surface Area":293.55,"Druglikeness":-32.166},{"Names":"Agrocybin","Smiles":"C(C#CC#CC#CC(=O)N)O","InChI-Key":null,"pka":null,"Total Molweight":147.133,"cLogP":-0.0006,"cLogS":-6.586,"H-Acceptors":3.0,"H-Donors":2.0,"Total Surface Area":149.28,"Druglikeness":-9.4254},{"Names":"Cephalosporin C","Smiles":"CC(=O)OCC1=C(N2[C@@H]([C@@H](C2=O)NC(=O)CCC[C@H](C(=O)O)N)SC1)C(=O)O","InChI-Key":null,"pka":null,"Total Molweight":414.414,"cLogP":-3.2475,"cLogS":-1.261,"H-Acceptors":11.0,"H-Donors":3.0,"Total Surface Area":284.1,"Druglikeness":-9.5739},{"Names":"Citrinin","Smiles":"C[C@@H]1[C@H](OC=C2C1=C(C(=C(C2=O)C(=O)O)O)C)C","InChI-Key":null,"pka":null,"Total Molweight":250.249,"cLogP":0.3308,"cLogS":-1.747,"H-Acceptors":5.0,"H-Donors":2.0,"Total Surface Area":177.03,"Druglikeness":0.5493},{"Names":"Helvolic acid","Smiles":"C[C@H]1[C@@H]2[C@@H](C(=O)[C@]3(...)C)OC(=O)C","InChI-Key":null,"pka":null,"Total Molweight":567.696,"cLogP":4.9789,"cLogS":-5.021,"H-Acceptors":8.0,"H-Donors":1.0,"Total Surface Area":416.59,"Druglikeness":0.6863},{"Names":"Monorden","Smiles":"C[C@@H]1C[C@@H]2[C@H](O2)/C=C\\C=C\\C(=O)CC3=C(...)C(=O)O1","InChI-Key":null,"pka":null,"Total Molweight":364.78,"cLogP":2.1044,"cLogS":-3.398,"H-Acceptors":6.0,"H-Donors":2.0,"Total Surface Area":267.81,"Druglikeness":0.51},{"Names":"Neohydroxyaspergillic Acid","Smiles":"CC(C)CC1=NC=C(N(C1=O)O)C(C(C)C)O","InChI-Key":null,"pka":null,"Total Molweight":240.302,"cLogP":0.2272,"cLogS":-2.286,"H-Acceptors":5.0,"H-Donors":2.0,"Total Surface Area":188.73,"Druglikeness":2.3696},{"Names":"Penicillic acid","Smiles":"CC(=C)C(=O)/C(=C/C(=O)O)/OC","InChI-Key":null,"pka":null,"Total Molweight":169.155,"cLogP":1.1763,"cLogS":-1.332,"H-Acceptors":4.0,"H-Donors":1.0,"Total Surface Area":132.08,"Druglikeness":-14.208},{"Names":"Terreic acid","Smiles":"CC1=C(C(=O)[C@H]2[C@@H](C1=O)O2)O","InChI-Key":null,"pka":null,"Total Molweight":153.113,"cLogP":-0.7747,"cLogS":-1.07,"H-Acceptors":4.0,"H-Donors":0.0,"Total Surface Area":103.08,"Druglikeness":0.7331},{"Names":"Trichodermin","Smiles":"CC1=C[C@@H]2[C@](CC1)([C@]3([C@@H](C[C@H]([C@@]34CO4)O2)OC(=O)C)C)C","InChI-Key":null,"pka":null,"Total Molweight":291.366,"cLogP":1.3108,"cLogS":-2.767,"H-Acceptors":4.0,"H-Donors":0.0,"Total Surface Area":207.17,"Druglikeness":-1.2614},{"Names":"333 Aspirochlorin","Smiles":"CON1C(=O)[C@H]2NC(=O)[C@]13[C@H](C4=CC(=C(C=C4O3)O)Cl)SS2","InChI-Key":null,"pka":null,"Total Molweight":361.805,"cLogP":1.2969,"cLogS":-2.617,"H-Acceptors":7.0,"H-Donors":2.0,"Total Surface Area":196.95,"Druglikeness":5.4186},{"Names":"3-demethyl colchicine","Smiles":"CC(=O)N[C@H]1CCC2=CC(=C(C(=C2C3=CC=C(C(=O)C=C13)OC)OC)OC)O","InChI-Key":null,"pka":null,"Total Molweight":384.407,"cLogP":1.6914,"cLogS":-3.696,"H-Acceptors":7.0,"H-Donors":1.0,"Total Surface Area":289.66,"Druglikeness":1.024},{"Names":"Fatty Alcohol (Tetracosanol)","Smiles":"CCCCCCCCCCCCCCCCCCCCCCCCO","InChI-Key":null,"pka":null,"Total Molweight":353.652,"cLogP":10.122,"cLogS":-6.523,"H-Acceptors":1.0,"H-Donors":0.0,"Total Surface Area":345.49,"Druglikeness":-21.561},{"Names":"Gloriosine","Smiles":"COC1=CC=C2C(=CC1=O)[C@H](CCC3=CC(=C(C(=C32)OC)OC)OC)NC=O","InChI-Key":null,"pka":null,"Total Molweight":385.415,"cLogP":1.6756,"cLogS":-3.165,"H-Acceptors":7.0,"H-Donors":1.0,"Total Surface Area":298.2,"Druglikeness":1.3115},{"Names":"Bergapten","Smiles":"COC1=C2C=CC(=O)OC2=CC3=C1C=CO3","InChI-Key":"Unknown","pka":null,"Total Molweight":216.192,"cLogP":1.1075,"cLogS":-5.297,"H-Acceptors":4.0,"H-Donors":0.0,"Total Surface Area":160.56,"Druglikeness":-3.3751},{"Names":"Isobergapten","Smiles":"COC1=C2C=CC(=O)OC2=C3C=COC3=C1","InChI-Key":"Unknown","pka":null,"Total Molweight":215.184,"cLogP":1.6024,"cLogS":-3.366,"H-Acceptors":4.0,"H-Donors":0.0,"Total Surface Area":153.81,"Druglikeness":-3.3751},{"Names":"Isoimperatorin","Smiles":"CC(=CCOC1=C2C=CC(=O)OC2=CC3=C1C=CO3)C","InChI-Key":"IGWDEVSBEKYORK-UHFFFAOYSA-N","pka":null,"Total Molweight":270.283,"cLogP":3.5483,"cLogS":-4.283,"H-Acceptors":4.0,"H-Donors":0.0,"Total Surface Area":211.29,"Druglikeness":-3.6972},{"Names":"Xanthotoxin","Smiles":"COC1=C2C(=CC3=C1OC=C3)C=CC(=O)O2","InChI-Key":"QXKHYNVANLEOEG-UHFFFAOYSA-N","pka":null,"Total Molweight":216.192,"cLogP":1.879,"cLogS":-3.547,"H-Acceptors":4.0,"H-Donors":0.0,"Total Surface Area":160.56,"Druglikeness":-3.3751},{"Names":"Psoralen","Smiles":"C1=CC(=O)OC2=CC3=C(C=CO3)C=C21","InChI-Key":"ZCCUUQDIBDJBTK-UHFFFAOYSA-N","pka":null,"Total Molweight":186.166,"cLogP":1.949,"cLogS":-3.529,"H-Acceptors":3.0,"H-Donors":0.0,"Total Surface Area":138.3,"Druglikeness":-3.5751},{"Names":"Bakuchiol","Smiles":"CC(=CCC[C@@](C)(C=C)/C=C/C1=CC=C(C=C1)O)C","InChI-Key":"LFYJSSARVMHQJB-GOSISDBHSA-N","pka":null,"Total Molweight":256.388,"cLogP":6.0837,"cLogS":-4.02,"H-Acceptors":1.0,"H-Donors":1.0,"Total Surface Area":230.07,"Druglikeness":-6.3759},{"Names":"Heratomol","Smiles":"C1=CC(=O)OC2=C3C=COC3=C(C=C21)O","InChI-Key":"ZKCVFMVZXPEHMD-UHFFFAOYSA-N","pka":null,"Total Molweight":202.165,"cLogP":1.6033,"cLogS":-3.233,"H-Acceptors":4.0,"H-Donors":1.0,"Total Surface Area":144.65,"Druglikeness":-3.4909},{"Names":"Marmin","Smiles":"C/C(=C\\COC1=CC2=C(C=C1)C=CC(=O)O2)/CC[C@H](C(C)(C)O)O","InChI-Key":"QYYKWTUUCOTGNS-QGZVFWFLSA-N","pka":null,"Total Molweight":332.395,"cLogP":3.2513,"cLogS":-3.515,"H-Acceptors":5.0,"H-Donors":2.0,"Total Surface Area":262.39,"Druglikeness":-3.8068},{"Names":"Marmesin","Smiles":"CC(C)([C@@H]1CC2=C(O1)C=C3C(=C2)C=CC(=O)O3)O","InChI-Key":"FWYSBEAFFPBAQU-GFCCVEGCSA-N","pka":null,"Total Molweight":246.261,"cLogP":1.8611,"cLogS":-3.095,"H-Acceptors":4.0,"H-Donors":1.0,"Total Surface Area":178.05,"Druglikeness":-2.8333},{"Names":"Seselin","Smiles":"CC1(C=CC2=C(O1)C=CC3=C2OC(=O)C=C3)C","InChI-Key":"QUVCQYQEIOLHFZ-UHFFFAOYSA-N","pka":null,"Total Molweight":228.246,"cLogP":2.5241,"cLogS":-3.629,"H-Acceptors":3.0,"H-Donors":0.0,"Total Surface Area":171.94,"Druglikeness":-4.6038},{"Names":"Ovalichromene B","Smiles":"CC1(C=CC2=C(O1)C=CC3=C2OC(CC3=O)C4=CC5=C(C=C4)OCO5)C","InChI-Key":"JRTNAZKQGYGUQE-GOSISDBHSA-N","pka":null,"Total Molweight":350.369,"cLogP":4.3309,"cLogS":-5.498,"H-Acceptors":5.0,"H-Donors":0.0,"Total Surface Area":251.72,"Druglikeness":-1.4442},{"Names":"Gibberellic acid","Smiles":"C[C@@]12[C@H](C=C[C@@]3([C@@H]1[C@@H]([C@]45...)OC2=O)O","InChI-Key":"IXORZMNAPKEEDV-MYSPZSBCSA-N","pka":null,"Total Molweight":346.378,"cLogP":0.0924,"cLogS":-2.659,"H-Acceptors":6.0,"H-Donors":3.0,"Total Surface Area":218.74,"Druglikeness":-1.7675},{"Names":"Mahanimbin","Smiles":"CC1=CC2=C(C3=C1OC(C=C3)(C)CCC=C(C)C)NC4=CC=CC=C42","InChI-Key":"HTNVFUBCWIYPJN-QHCPKHFHSA-N","pka":null,"Total Molweight":331.458,"cLogP":6.5583,"cLogS":-6.221,"H-Acceptors":2.0,"H-Donors":1.0,"Total Surface Area":266.71,"Druglikeness":-0.9867},{"Names":"Strychnine","Smiles":"C1CN2CC3=CCO[C@H]4CC(=O)N5[C@H]6[C@H]4[C@H]3C[C@H]2[C@@]61C7=CC=CC=C75","InChI-Key":"QMGVPVSNSZLJIA-QYFBZWOXSA-N","pka":null,"Total Molweight":334.418,"cLogP":1.5935,"cLogS":-3.554,"H-Acceptors":4.0,"H-Donors":0.0,"Total Surface Area":220.79,"Druglikeness":4.5843},{"Names":"Silybin","Smiles":"COC1=C(C=CC(=C1)[C@@H]2[C@H](OC3=C(O2)...)CO)O","InChI-Key":"SEBFKMXJBCUCAI-OXCBMLQPSA-N","pka":null,"Total Molweight":482.44,"cLogP":2.1266,"cLogS":-3.406,"H-Acceptors":10.0,"H-Donors":5.0,"Total Surface Area":331.3,"Druglikeness":0.2248},{"Names":"Quercetin","Smiles":"C1=CC(=C(C=C1C2=C(C(=O)C3=C(C=C(C=C3O2)O)O)O)O)O","InChI-Key":"REFJWTPEDVJJIY-UHFFFAOYSA-N","pka":null,"Total Molweight":302.237,"cLogP":1.4902,"cLogS":-2.491,"H-Acceptors":7.0,"H-Donors":5.0,"Total Surface Area":201.94,"Druglikeness":-0.0828},{"Names":"Rutin","Smiles":"C[C@H]1[C@@H]([C@H]([C@H]([C@@H](O1)OC...)O","InChI-Key":"IKGXIBQEEMLURG-RZIXAHTPSA-N","pka":null,"Total Molweight":610.519,"cLogP":-1.2573,"cLogS":-2.398,"H-Acceptors":16.0,"H-Donors":10.0,"Total Surface Area":397.71,"Druglikeness":1.9337},{"Names":"Ferulic acid","Smiles":"COC1=C(C=CC(=C1)/C=C/C(=O)O)O","InChI-Key":"KSEBMYQBYZTDHS-UHFFFAOYSA-N","pka":null,"Total Molweight":194.185,"cLogP":1.0582,"cLogS":-1.721,"H-Acceptors":4.0,"H-Donors":2.0,"Total Surface Area":152.47,"Druglikeness":0.2751},{"Names":"Negundoside","Smiles":"C[C@@]1(CC[C@H]2[C@@H]1[C@@H](OC=C2C(=O)O)O[C@H]3...)O","InChI-Key":"RFCSGMIUBXUYSE-FDQITFABSA-N","pka":null,"Total Molweight":496.463,"cLogP":-0.7872,"cLogS":-2.268,"H-Acceptors":12.0,"H-Donors":6.0,"Total Surface Area":335.02,"Druglikeness":0.7654},{"Names":"Gardenin B","Smiles":"COC1=CC=C(C=C1)C2=CC(=O)C3=C(C(=C(C(=C3O2)OC)OC)OC)O","InChI-Key":"LXEVSYZNYDZSOB-UHFFFAOYSA-N","pka":null,"Total Molweight":358.345,"cLogP":2.7471,"cLogS":-3.52,"H-Acceptors":7.0,"H-Donors":1.0,"Total Surface Area":267.37,"Druglikeness":0.4033},{"Names":"Gallic acid","Smiles":"C1=C(C=C(C(=C1O)O)O)C(=O)O","InChI-Key":"Unknown","pka":null,"Total Molweight":169.112,"cLogP":0.1825,"cLogS":-0.847,"H-Acceptors":5.0,"H-Donors":3.0,"Total Surface Area":113.31,"Druglikeness":-1.8434},{"Names":"Agnuside","Smiles":"C1=CO[C@H]([C@H]2[C@@H]1[C@@H](C=C2COC(=O)C3=CC=C(C=C3)O)O)O[C@H]4...","InChI-Key":"GLACGTLACKLUJX-CVFBDLJPSA-N","pka":null,"Total Molweight":466.437,"cLogP":-1.011,"cLogS":-1.949,"H-Acceptors":11.0,"H-Donors":6.0,"Total Surface Area":319.84,"Druglikeness":-3.5307},{"Names":"Betulinic acid","Smiles":"CC(=C)[C@@H]1CC[C@]2([C@H]1...)C(=O)O","InChI-Key":"QGJZLNKBHJESQX-FWULUICDSA-N","pka":null,"Total Molweight":456.708,"cLogP":6.3706,"cLogS":-6.278,"H-Acceptors":3.0,"H-Donors":2.0,"Total Surface Area":337.41,"Druglikeness":-21.49},{"Names":"Luteolin","Smiles":"C1=CC(=C(C=C1C2=CC(=O)C3=C(C=C(C=C3O2)O)O)O)O","InChI-Key":"IQPNAANSBPBGFQ-UHFFFAOYSA-N","pka":null,"Total Molweight":286.238,"cLogP":1.99,"cLogS":-2.56,"H-Acceptors":6.0,"H-Donors":4.0,"Total Surface Area":197.38,"Druglikeness":0.2819},{"Names":"Silymarin","Smiles":"COC1=C(C=CC(=C1)C2C(OC3=C(O2)C=C(C=C3)C4C(C(=O)C5=C(C=C(C=C5O4)O)O)O)CO)O","InChI-Key":"SEBFKMXJBCUCAI-UHFFFAOYSA-N","pka":null,"Total Molweight":482.44,"cLogP":2.1266,"cLogS":-3.406,"H-Acceptors":10.0,"H-Donors":5.0,"Total Surface Area":331.3,"Druglikeness":0.2248},{"Names":"Butine","Smiles":"C1[C@H](OC2=C(C1=O)C=CC(=C2)O)C3=CC(=C(C=C3)O)O","InChI-Key":"MJBPUQUGJNAPAZ-CQSZACIVSA-N","pka":null,"Total Molweight":272.255,"cLogP":2.1557,"cLogS":-2.64,"H-Acceptors":5.0,"H-Donors":3.0,"Total Surface Area":192.58,"Druglikeness":-0.2201}];
+
+let currentData = [...DATA];
+
+function renderTable(data) {
+  const tbody = document.getElementById('tableBody');
+  document.getElementById('count').textContent = 'Showing ' + data.length + ' of ' + DATA.length + ' compounds';
+  if (data.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:#999;padding:20px">No results found</td></tr>';
+    return;
+  }
+  tbody.innerHTML = data.map((c, i) => {
+    const mw = c['Total Molweight'];
+    return `<tr onclick="showDetail(${DATA.indexOf(c)})">
+      <td>${i + 1}</td>
+      <td>${c.Names.trim()}</td>
+      <td>${mw !== null ? mw : '<span class="na">N/A</span>'}</td>
+      <td>${c.cLogP !== null ? c.cLogP : '<span class="na">N/A</span>'}</td>
+      <td>${c.cLogS !== null ? c.cLogS : '<span class="na">N/A</span>'}</td>
+      <td>${c['H-Acceptors'] !== null ? c['H-Acceptors'] : '<span class="na">N/A</span>'}</td>
+      <td>${c['H-Donors'] !== null ? c['H-Donors'] : '<span class="na">N/A</span>'}</td>
+      <td>${c.Druglikeness !== null ? c.Druglikeness : '<span class="na">N/A</span>'}</td>
+    </tr>`;
+  }).join('');
+}
+
+function filterTable() {
+  const q = document.getElementById('searchBox').value.toLowerCase();
+  currentData = DATA.filter(c => c.Names.toLowerCase().includes(q));
+  renderTable(currentData);
+}
+
+function sortTable(by) {
+  currentData.sort((a, b) => {
+    if (by === 'name') return a.Names.trim().localeCompare(b.Names.trim());
+    const key = by === 'mw' ? 'Total Molweight' : by === 'logp' ? 'cLogP' : 'Druglikeness';
+    const av = a[key] ?? -Infinity;
+    const bv = b[key] ?? -Infinity;
+    return bv - av;
+  });
+  renderTable(currentData);
+}
+
+function showDetail(idx) {
+  const c = DATA[idx];
+  document.getElementById('modal-name').textContent = c.Names.trim();
+
+  const rows = [
+    ['Molecular Weight', c['Total Molweight'] !== null ? c['Total Molweight'] + ' g/mol' : 'N/A'],
+    ['cLogP', c.cLogP !== null ? c.cLogP : 'N/A'],
+    ['cLogS', c.cLogS !== null ? c.cLogS : 'N/A'],
+    ['H-Acceptors', c['H-Acceptors'] !== null ? c['H-Acceptors'] : 'N/A'],
+    ['H-Donors', c['H-Donors'] !== null ? c['H-Donors'] : 'N/A'],
+    ['Total Surface Area', c['Total Surface Area'] !== null ? c['Total Surface Area'] + ' Å²' : 'N/A'],
+    ['Druglikeness', c.Druglikeness !== null ? c.Druglikeness : 'N/A'],
+    ['pKa', c.pka !== null ? c.pka : 'N/A'],
+    ['InChI-Key', (c['InChI-Key'] && c['InChI-Key'] !== 'Unknown') ? c['InChI-Key'] : 'N/A'],
+    ['SMILES', c.Smiles ? '<span class="smiles-val">' + c.Smiles.trim() + '</span>' : 'N/A'],
+  ];
+
+  document.getElementById('modal-table').innerHTML = rows.map(function(r) {
+    return '<tr><td>' + r[0] + '</td><td>' + r[1] + '</td></tr>';
+  }).join('');
+
+  document.getElementById('modalOverlay').style.display = 'block';
+}
+
+function closeModal(e) {
+  if (e.target === document.getElementById('modalOverlay')) {
+    document.getElementById('modalOverlay').style.display = 'none';
+  }
+}
+
+function closeModalDirect() {
+  document.getElementById('modalOverlay').style.display = 'none';
+}
+
+renderTable(DATA);
+</script>
+</body>
+</html>
